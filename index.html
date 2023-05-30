@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    .racs {
+      display: grid;
+      grid-template-columns: repeat(20, 30px);
+      grid-template-rows: repeat(20, 30px);
+      gap: 2px;
+      background-color: #000;
+    }
+    
+    .cella {
+      background-color: #fff;
+    }
+    
+    .fal {
+      background-color: #000;
+    }
+    .pacman {
+      transition: transform 0.2s ease-in-out;
+    }
+
+    .fordul-fel {
+      transform: rotate(-90deg);
+    }
+
+    .fordul-le {
+      transform: rotate(90deg);
+    }
+
+    .fordul-balra {
+      transform: rotate(180deg);
+    }
+
+    .fordul-jobbra {
+      transform: rotate(0);
+    }
+
+    .szellem {
+      background-color: #ff0000;
+      border-radius: 50%;
+      width: 20px;
+      height: 20px;
+      margin: 5px;
+      position: relative;
+    }
+  </style>
+</head>
+<body>
+  <article>
+    <div class="racs"></div>
+  </article>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const racs = document.querySelector('.racs');
+      const pacman = document.createElement('img');
+      pacman.src = 'pacman/pacman.png';
+      pacman.classList.add('pacman');
+      let aktualisCella = null;
+
+      function letrehozRacs() {
+        for (let i = 0; i < 20; i++) {
+          for (let j = 0; j < 20; j++) {
+            const cella = document.createElement('div');
+            cella.classList.add('cella');
+            racs.appendChild(cella);
+          }
+        }
+        pacmanTablaLetrehozasa();
+        const cellak = document.querySelectorAll('.cella:not(.fal)');
+        const randomIndex = Math.floor(Math.random() * cellak.length);
+        aktualisCella = cellak[randomIndex];
+        aktualisCella.appendChild(pacman);
+        const ervenyesCellak = document.querySelectorAll('.cella:not(.fal)');
+        ervenyesCellak.forEach(cella => {
+          const erme = document.createElement('img');
+          erme.src = 'coin.jpg';
+          cella.style.backgroundImage = `url(${erme.src})`;
+        });
+        const szellemekSzama = 4;
+        for (let i = 0; i < szellemekSzama; i++) {
+          const szellem = document.createElement('div');
+          szellem.classList.add('szellem');
+
+          const cellak = document.querySelectorAll('.cella:not(.fal):not(:has(.szellem)):not(:has(.pacman))');
+          const randomIndex = Math.floor(Math.random() * cellak.length);
+          const celCella = cellak[randomIndex];
+          celCella.appendChild(szellem);
+        }
+      }
+      function szellemekMozgatasa() {
+        const szellemek = document.querySelectorAll('.szellem');
+        setInterval(() => {
+          szellemek.forEach((szellem) => {
+            const aktualisCella = szellem.parentElement;
+            const cellaArray = Array.from(document.querySelectorAll('.cella'));
+            const aktualisCellaIndex = cellaArray.indexOf(aktualisCella);
+
+            const iranyok = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'];
+            const randomIrany = iranyok[Math.floor(Math.random() * iranyok.length)];
+
+            szellemMozgatasa(szellem, randomIrany);
+          });
+        }, 1000);
+      }
+
+      function szellemMozgatasa(szellem, irany) {
+        const aktualisCella = szellem.parentElement;
+        const cellaArray = Array.from(document.querySelectorAll('.cella'));
+        const aktualisCellaIndex = cellaArray.indexOf(aktualisCella);
+        let kovetkezoCellaIndex;
+
+        switch (irany) {
+          case 'ArrowUp':
+            kovetkezoCellaIndex = aktualisCellaIndex - 20;
+            break;
+          case 'ArrowDown':
+            kovetkezoCellaIndex = aktualisCellaIndex + 20;
+            break;
+          case 'ArrowLeft':
+            kovetkezoCellaIndex = aktualisCellaIndex - 1;
+            break;
+          case 'ArrowRight':
+            kovetkezoCellaIndex = aktualisCellaIndex + 1;
+            break;
+        }
+
+        const kovetkezoCella = cellaArray[kovetkezoCellaIndex];
+
+        if (kovetkezoCella && !kovetkezoCella.classList.contains('fal') && !kovetkezoCella.querySelector('.szellem')) {
+          kovetkezoCella.appendChild(szellem);
+        }
+      }
+
+      function pacmanTablaLetrehozasa() {
+        const cellak = document.querySelectorAll('.cella');
+        const cellaArray = Array.from(cellak);
+        const falak = new Set();
+
+        falakLetrehozasa();
+
+        function falakLetrehozasa() {
+          for (let i = 0; i < 20; i++) {
+            const felsoFal = cellaArray[i];
+            const alsoFal = cellaArray[i + 380];
+            felsoFal.classList.add('fal');
+            alsoFal.classList.add('fal');
+            falak.add(felsoFal);
+            falak.add(alsoFal);
+          }
+
+          for (let i = 20; i <= 380; i += 20) {
+            const balFal = cellaArray[i];
+            const jobbFal = cellaArray[i + 19];
+            balFal.classList.add('fal');
+            jobbFal.classList.add('fal');
+            falak.add(balFal);
+            falak.add(jobbFal);
+          }
+        }
+        const feherCellak = document.querySelectorAll('.cella:not(.fal)');
+        feherCellak.forEach(cella => {
+          const erme = document.createElement('img');
+          erme.src = 'coin.jpg';
+          cella.style.backgroundImage = `url(${erme.src})`;
+        });
+      }
+
+      function pacmanMozgatasa(event) {
+        const gomb = event.key;
+        const aktualisCellaRect = aktualisCella.getBoundingClientRect();
+        let aktualisX = aktualisCellaRect.left;
+        let aktualisY = aktualisCellaRect.top;
+        let fordulasOsztaly = '';
+
+        // lenyomott nyilak
+        if (gomb === 'ArrowUp') {
+          aktualisY -= 32;
+          fordulasOsztaly = 'fordul-fel';
+        } else if (gomb === 'ArrowDown') {
+          aktualisY += 32;
+          fordulasOsztaly = 'fordul-le';
+        } else if (gomb === 'ArrowLeft') {
+          aktualisX -= 32;
+          fordulasOsztaly = 'fordul-balra';
+        } else if (gomb === 'ArrowRight') {
+          aktualisX += 32;
+          fordulasOsztaly = 'fordul-jobbra';
+        }
+
+        const ujCella = document.elementFromPoint(aktualisX, aktualisY);
+        if (ujCella && !ujCella.classList.contains('fal') && !ujCella.querySelector('.szellem')) {
+          aktualisCella.removeChild(pacman);
+          ujCella.appendChild(pacman);
+          aktualisCella = ujCella;
+        }
+
+        // Pacman
+        if (fordulasOsztaly) {
+          pacman.classList.remove('fordul-fel', 'fordul-le', 'fordul-balra', 'fordul-jobbra');
+          pacman.classList.add(fordulasOsztaly);
+        }
+      }
+
+      letrehozRacs();
+      szellemekMozgatasa();
+
+      document.addEventListener('keydown', pacmanMozgatasa);
+    });
+  </script>
+</body>
+</html>
